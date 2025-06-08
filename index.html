@@ -27,15 +27,18 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-screen">
     <div id="app" class="w-full max-w-md mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 md:p-8">
-        <h1 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white text-center mb-6">myWeatherApp</h1>
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white text-center mb-6">WeatherNow</h1>
         <!-- search input and button-->
         <div class="flex items-center gap-2 mb-4">
             <input
+            v-model.trim="cityInput"
+            @keyup.enter="getWeather"
             placeholder="Wpisz miasto"
             class="flex-grow p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition duration-200"
             type="text"
             >
             <button
+            @click="getWeather"
             :disabled="loading"
             class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-5 rounded-lg transistion duration-200 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center"
             
@@ -59,23 +62,106 @@
 
         <!-- Wyświetlanie pogody-->
         <transition name="fade">
-            <div v-if="weather.name" >
-            pogoda
-            </div>
+            <div v-if="weather.name" class="text-center mt-8">
+                <!-- miasto i kraj-->
+                 <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">{{ weather.name }}, {{ weather.sys.country }}</h2>
+                <img :src="'http://openweathermap.org/img/wn/' + weather.weather[0].icon + '@4x.png'" alt="Weather Icon" class="mx-auto mb-4"
+              
+                >
+                <!-- temperatura-->
+                <p class="text-6xl font-bold text-gray-900 dark:text-white">{{ Math.round(weather.main.temp) }}°C</p>
+                <!-- opis pogody-->
+                <p class="text-xl text-gray-600 dark:text-gray-300 capitalize mt-2">{{ weather.weather[0].description }}</p>
+
+                <!-- dodatkowe informacje-->
+                <div class="mt-8 grid grid-cols-2 gap-4 text-left">
+                    <div class="bg-gray-100 dark:text-gray-400">
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Odczuwalna</p>
+                        <p class="text-lg font-bold text-gray-800 dark:text-white">{{ Math.round(weather.main.feels_like) }}°C</p>
+                    </div>
+                    <div class="bg-gray-100 dark:text-gray-400">
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Wilgotność</p>
+                        <p class="text-lg font-bold text-gray-800 dark:text-white">{{ weather.main.humidity }}%</p>
+                    </div>
+                    <div class="bg-gray-100 dark:text-gray-400">
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Wiatr</p>
+                        <p class="text-lg font-bold text-gray-800 dark:text-white">{{ Math.round(weather.wind.speed) }} m/s</p>
+                        </div>  
+                    <div class="bg-gray-100 dark:text-gray-400">
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Ciśnienie</p>
+                        <p class="text-lg font-bold text-gray-800 dark:text-white">{{ weather.main.pressure }} hPa</p>
+                    </div>
+            </div>  
         </transition>
     </div>   
     <script>
-      const { createApp, ref } = Vue;
+      const { createApp, ref, onMounted  } = Vue;
 
       createApp({
         setup() {
-          const loading = ref(false);
-          const apiKey = ref('TU_WSTAW_SWÓJ_KLUCZ');
-          const error   = ref('');
-          const weather = ref({});
-          // tu metody np. fetchWeather…
-          return { loading, apiKey, error, weather };
-        }
+    
+        const apiKey = ref('');
+
+        let cityInput = ref('Warszawa');
+        let weather = ref({}); 
+        let loading = ref(false);
+        let error = ref('');
+
+        //metody
+        const getWeather = async () => {
+            if (!apiKey.value){
+                console.error('Brak klucza API');
+                error.value = 'Brak klucza API';
+                return
+            }
+            if (!cityInput.value) {
+                error.value = 'Proszę wpisać nazwę miasta';
+                return
+            }
+            loading.value = true;
+            error.value = '';
+            weather.value = {};
+            try {
+                const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${cityInput.value}&appid=${apiKey.value}&units=metric`;
+                console.log('Pobieranie danych z API:', apiUrl);
+                const response = await fetch(`${apiUrl}`);
+                if (!response.ok) {
+                    if (response.status === 404) { // Sprawdzenie, czy miasto istnieje
+                        error.value = 'Nie znaleziono miasta: ' + cityInput.value;
+                        return;
+                    } else {
+                        const errorData = await response.json();
+                        error.value = 'Błąd API: ' + errorData.message;
+                        return;
+                    }
+                }
+                const data = await response.json();
+                console.log('Otrzymane dane:', data);
+                weather.value = data;
+            } catch (err) {
+                console.error('Błąd podczas pobierania danych pogodowych:', err);
+                error.value = err.message || 'Wystąpił błąd podczas pobierania danych pogodowych';
+            } finally {
+                loading.value = false;
+            }
+        };
+        onMounted(() => {
+            if (cityInput.value) {
+                getWeather();
+            } 
+        });
+        return {
+            apiKey,
+            cityInput,
+            weather,
+            loading,
+            error,
+            getWeather
+
+            
+        };
+         
+        }   
       }).mount('#app');
     </script>
 </body>
