@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pl-PL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>myWeatherApp</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/vue@3.2.47/dist/vue.global.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.5s;
+        }
+        .fade-enter-from, .fade-leave-to{
+            opacity: 0;
+        }
+        
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-screen">
+    <div id="app" class="w-full max-w-md mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 md:p-8">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white text-center mb-6">myWeatherApp</h1>
+        <!-- search input and button-->
+        <div class="flex items-center gap-2 mb-4">
+            <input
+            placeholder="Wpisz miasto"
+            class="flex-grow p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition duration-200"
+            type="text"
+            >
+            <button
+            :disabled="loading"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-5 rounded-lg transistion duration-200 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center"
+            
+            >
+            <span v-if="loading" class="animate-spin inline-block w-5 h-5 border-4 border-t-4 border-blue-300 rounded-full"></span>
+            <span v-else>Szukaj</span>
+        </button>
+        </div>
+    
+        <!-- ostrzeżenie o braku klucza API-->
+        <div v-if="!apiKey" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-6" role="alert">
+            <p class="font-bold">Brak klucza API</p>
+        </div>
+
+        <!-- Wyświetlanie błędu-->
+        <transition name="fade">
+            <div v-if="error">
+                <p>{{error}}</p>
+            </div>
+        </transition>
+
+        <!-- Wyświetlanie pogody-->
+        <transition name="fade">
+            <div v-if="weather.name" >
+            pogoda
+            </div>
+        </transition>
+    </div>   
+    <script>
+      const { createApp, ref } = Vue;
+
+      createApp({
+        setup() {
+          const loading = ref(false);
+          const apiKey = ref('TU_WSTAW_SWÓJ_KLUCZ');
+          const error   = ref('');
+          const weather = ref({});
+          // tu metody np. fetchWeather…
+          return { loading, apiKey, error, weather };
+        }
+      }).mount('#app');
+    </script>
+</body>
+</html>
