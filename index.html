@@ -6,12 +6,11 @@
     <title>WeatherNow</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/vue@3.2.47/dist/vue.global.js"></script>
-    <!-- Tailwind CSS -->
+    <link rel="stylesheet" href="fontello/css/fontello.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -19,62 +18,47 @@
         .fade-enter-active, .fade-leave-active {
             transition: opacity 0.5s;
         }
-        .fade-enter-from, .fade-leave-to{
+        .fade-enter-from, .fade-leave-to {
             opacity: 0;
         }
-        
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 flex flex-col min-h-screen">
     <div class="flex-1 flex items-center justify-center">
-        <div id="app" class="w-full max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 md:p-8">
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white text-center mb-6">WeatherNow</h1>
-            <!-- search input and button-->
+        <div id="app" class="w-full max-w-md md:max-w-2xl lg:max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 md:p-10">
+            <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 dark:text-white text-center mb-6">WeatherNow</h1>
             <div class="flex items-center gap-2 mb-4">
-                <input
-                v-model.trim="cityInput"
-                @keyup.enter="getWeather"
-                placeholder="Wpisz miasto"
-                class="flex-grow p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition duration-200"
-                type="text"
-                >
-                <button
-                @click="getWeather"
-                :disabled="loading"
-                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-5 rounded-lg transistion duration-200 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center"
-                
-                >
-                <span v-if="loading" class="animate-spin inline-block w-5 h-5 border-4 border-t-4 border-blue-300 rounded-full"></span>
-                <span v-else>Szukaj</span>
-            </button>
+                <input v-model.trim="cityInput" @keyup.enter="getWeather" placeholder="Wpisz miasto"
+                       class="flex-grow p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition duration-200"
+                       type="text">
+                <button @click="getWeatherByGeolocation" :disabled="loading"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-5 rounded-lg transition duration-200 flex items-center justify-center">
+                    <i class="icon-location-outline"></i>
+                    <span class="sr-only">Pobierz lokalizację</span>
+                </button>
+                <button @click="getWeather" :disabled="loading"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-5 rounded-lg transition duration-200 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center">
+                    <span v-if="loading" class="animate-spin inline-block w-5 h-5 border-4 border-t-4 border-blue-300 rounded-full"></span>
+                    <span v-else>Szukaj</span>
+                </button>
             </div>
-        
-            <!-- ostrzeżenie o braku klucza API-->
+
             <div v-if="!apiKey" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-6" role="alert">
                 <p class="font-bold">Brak klucza API</p>
             </div>
 
-            <!-- Wyświetlanie błędu-->
             <transition name="fade">
                 <div v-if="error">
-                    <p>{{error}}</p>
+                    <p class="text-red-500 text-center">{{error}}</p>
                 </div>
             </transition>
 
-            <!-- Wyświetlanie pogody-->
             <transition name="fade">
                 <div v-if="weather.name" class="text-center mt-8">
-                    <!-- miasto i kraj-->
-                     <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">{{ weather.name }}, {{ weather.sys.country }}</h2>
-                    <img :src="'http://openweathermap.org/img/wn/' + weather.weather[0].icon + '@4x.png'" alt="Weather Icon" class="mx-auto mb-4"
-                  
-                    >
-                    <!-- temperatura-->
-                    <p class="text-6xl font-bold text-gray-900 dark:text-white">{{ Math.round(weather.main.temp) }}°C</p>
-                    <!-- opis pogody-->
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">{{ weather.name }}, {{ weather.sys.country }}</h2>
+                    <img :src="'http://openweathermap.org/img/wn/' + weather.weather[0].icon + '@4x.png'" alt="Weather Icon" class="mx-auto mb-4">
+                    <p class="text-6xl md:text-7xl lg:text-8xl font-bold text-gray-900 dark:text-white">{{ Math.round(weather.main.temp) }}°C</p>
                     <p class="text-xl text-gray-600 dark:text-gray-300 capitalize mt-2">{{ weather.weather[0].description }}</p>
-
-                    <!-- dodatkowe informacje-->
                     <div class="mt-8 grid grid-cols-2 gap-4 text-left">
                         <div class="bg-gray-100 dark:text-gray-400">
                             <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Odczuwalna</p>
@@ -87,14 +71,14 @@
                         <div class="bg-gray-100 dark:text-gray-400">
                             <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Wiatr</p>
                             <p class="text-lg font-bold text-gray-800 dark:text-white">{{ Math.round(weather.wind.speed) }} m/s</p>
-                            </div>  
+                        </div>
                         <div class="bg-gray-100 dark:text-gray-400">
                             <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Ciśnienie</p>
                             <p class="text-lg font-bold text-gray-800 dark:text-white">{{ weather.main.pressure }} hPa</p>
                         </div>
-                </div>  
-                </transition>
-            </div>
+                    </div>
+                </div>
+            </transition>
         </div>
     </div>
     <footer class="mt-8 text-center text-gray-600 dark:text-gray-400">
@@ -102,74 +86,123 @@
     </footer>
 
     <script>
-      const { createApp, ref, onMounted  } = Vue;
+        const { createApp, ref, onMounted } = Vue;
+        createApp({
+           setup() {
+            const apiKey = ref('');
+            const cityInput = ref('Warszawa');
+            const weather = ref({});
+            const loading = ref(false);
+            const error = ref('');
 
-      createApp({
-        setup() {
-    
-        const apiKey = ref('');
+            let lastCoordinates = null; // Będzie później użyte do zapamiętania współrzędnych
 
-        let cityInput = ref('Warszawa');
-        let weather = ref({}); 
-        let loading = ref(false);
-        let error = ref('');
-
-        //metody
-        const getWeather = async () => {
-            if (!apiKey.value){
-                console.error('Brak klucza API');
-                error.value = 'Brak klucza API';
-                return
-            }
-            if (!cityInput.value) {
-                error.value = 'Proszę wpisać nazwę miasta';
-                return
-            }
-            loading.value = true;
-            error.value = '';
-            weather.value = {};
-            try {
-                const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${cityInput.value}&appid=${apiKey.value}&units=metric`;
-                console.log('Pobieranie danych z API:', apiUrl);
-                const response = await fetch(`${apiUrl}`);
-                if (!response.ok) {
-                    if (response.status === 404) { // Sprawdzenie, czy miasto istnieje
-                        error.value = 'Nie znaleziono miasta: ' + cityInput.value;
-                        return;
-                    } else {
-                        const errorData = await response.json();
-                        error.value = 'Błąd API: ' + errorData.message;
+            const getWeather = async () => {
+                if (!apiKey.value) {
+                    error.value = 'Brak klucza API';
+                    return;
+                }
+                if (!cityInput.value) {
+                    error.value = 'Proszę wpisać nazwę miasta';
+                    return;
+                }
+                loading.value = true;
+                error.value = '';
+                weather.value = {};
+                try {
+                    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${cityInput.value}&appid=${apiKey.value}&units=metric`;
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            error.value = 'Nie znaleziono miasta: ' + cityInput.value;
+                        } else {
+                            const errorData = await response.json();
+                            error.value = 'Błąd API: ' + errorData.message;
+                        }
                         return;
                     }
+                    const data = await response.json();
+                    weather.value = data;
+                } catch (err) {
+                    error.value = err.message || 'Wystąpił błąd podczas pobierania danych pogodowych';
+                } finally {
+                    loading.value = false;
                 }
-                const data = await response.json();
-                console.log('Otrzymane dane:', data);
-                weather.value = data;
-            } catch (err) {
-                console.error('Błąd podczas pobierania danych pogodowych:', err);
-                error.value = err.message || 'Wystąpił błąd podczas pobierania danych pogodowych';
-            } finally {
-                loading.value = false;
-            }
-        };
-        onMounted(() => {
-            if (cityInput.value) {
-                getWeather();
-            } 
-        });
-        return {
-            apiKey,
-            cityInput,
-            weather,
-            loading,
-            error,
-            getWeather
+            };
 
-            
-        };
-         
-        }   
-      }).mount('#app');
+            const fetchCityByCoordinates = async (lat, lon) => {
+                try {
+                    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey.value}&units=metric`;
+                    const response = await fetch(apiUrl);
+                    const data = await response.json();
+                    cityInput.value = data.name;
+                    weather.value = data;
+                } catch (err) {
+                    error.value = err.message || 'Wystąpił błąd podczas pobierania lokalizacji';
+                }
+            };
+
+            const getWeatherByGeolocation = () => {
+            if (lastCoordinates) {
+                fetchCityByCoordinates(lastCoordinates.latitude, lastCoordinates.longitude);  // Używamy zapamiętanych współrzędnych
+                return;
+            }
+            if (!navigator.geolocation) {
+                error.value = 'Geolokalizacja nie jest obsługiwana';
+                return;
+            }
+
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const { latitude, longitude } = position.coords;
+                            lastCoordinates = { latitude, longitude }; // zapamiętujemy
+                            fetchCityByCoordinates(latitude, longitude);
+                        },
+                        (err) => {
+                            console.error('Błąd geolokalizacji:', err);
+                            error.value = 'Nie można uzyskać lokalizacji. Proszę wpisać miasto ręcznie.';
+                        }
+                    );
+                };
+
+
+                const initializeGeolocation = () => {
+                    if (!navigator.geolocation || !navigator.permissions) {
+                        console.warn('Nie można uzyskać dostępu do geolokalizacji');
+                        cityInput.value = 'Warszawa';
+                        return;
+                    }
+                    navigator.permissions.query({ name: 'geolocation' }).then(result => {
+                        if (result.state === 'granted' || result.state === 'prompt') {
+                            navigator.geolocation.getCurrentPosition(position => {
+                                const { latitude, longitude } = position.coords;
+                                lastCoordinates = { latitude, longitude }; // zapamiętujemy
+                                fetchCityByCoordinates(latitude, longitude);
+                            }, error => {
+                                console.error('Błąd geolokalizacji:', error);
+                                error.value = 'Nie można uzyskać lokalizacji. Proszę wpisać miasto ręcznie.';
+                            });
+                        }
+                    });
+                };
+
+                onMounted(() => {
+                    if (apiKey.value) {
+                        initializeGeolocation();
+                    }
+                });
+
+                return {
+                    apiKey,
+                    cityInput,
+                    weather,
+                    loading,
+                    error,
+                    getWeather,
+                    getWeatherByGeolocation 
+                };
+            }
+        }).mount('#app');
     </script>
 </body>
 </html>
